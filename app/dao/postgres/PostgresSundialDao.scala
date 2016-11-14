@@ -3,6 +3,7 @@ package dao.postgres
 import java.sql.Connection
 
 import dao._
+import model.EmrState
 
 class PostgresSundialDao(implicit conn: Connection) extends SundialDao {
 
@@ -31,4 +32,5 @@ class PostgresSundialDao(implicit conn: Connection) extends SundialDao {
 
   override lazy val containerServiceStateDao = new PostgresContainerServiceStateDao()
 
+  override def emrStateDao: ExecutableStateDao[EmrState] = new PostgresEmrStateDao()
 }

@@ -25,3 +25,6 @@ case class ContainerServiceState(taskId: UUID, asOf: Date, ecsTaskArn: String, s
 
 case class ShellCommandExecutable(script: String, environmentVariables: Map[String, String]) extends Executable
 case class ShellCommandState(taskId: UUID, asOf: Date, status: TaskExecutorStatus) extends ExecutableState
+
+case class EmrExecutable(name: String, args: Seq[String], mainClass: String, jar: String, properties: Seq[(String, String)]) extends Executable
+case class EmrState(taskId: UUID, asOf: Date, emrJobFlowId: String, emrStepId: String, status: TaskExecutorStatus) extends ExecutableState

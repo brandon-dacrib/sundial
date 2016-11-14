@@ -15,7 +15,8 @@
     "task_executable": {
       "types": [
         {"type": "docker_image_command"},
-        {"type": "shell_script_command"}
+        {"type": "shell_script_command"},
+        {"type": "emr_jar_command"}
       ]
     }
   },
@@ -68,6 +69,7 @@
         {
           "name": "notify_when",
           "type": "notification_options",
+          "required": true,
           "default": "on_state_change_and_failures"
         }
       ]
@@ -183,7 +185,6 @@
         }
       ]
     },
-
     "docker_image_command": {
       "fields": [
         {
@@ -231,7 +232,6 @@
         }
       ]
     },
-
     "shell_script_command": {
       "fields": [
         {
@@ -246,13 +246,50 @@
         }
       ]
     },
-
+    "emr_jar_command": {
+      "fields": [
+        {
+          "name": "jar",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "mainClass",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "args",
+          "type": "[string]",
+          "required": true
+        },
+        {
+          "name": "properties",
+          "type": "[property]",
+          "required": true
+        }
+      ]
+    },
     "environment_variable": {
       "fields": [
         {
           "name": "variable_name",
           "type": "string",
           "required": true
+        },
+        {
+          "name": "value",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    "property": {
+      "fields": [
+        {
+          "name": "key",
+          "type": "string",
+          "required":"true"
         },
         {
           "name": "value",

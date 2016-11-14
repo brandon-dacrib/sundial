@@ -80,10 +80,12 @@ object ECSHelper {
       .withContainerDefinitions(containerDefinitions.asJava)
       .withVolumes(volumes.asJava)
 
-    val registerTaskDefinitionWithTaskRoleArn = taskDefinition.taskRoleArn.fold(registerTaskDefinitionRequest)(registerTaskDefinitionRequest.withTaskRoleArn(_))
+    taskDefinition.taskRoleArn.foreach { taskRoleArn =>
+      registerTaskDefinitionRequest.setTaskRoleArn(taskRoleArn)
+    }
 
     // Note: If you register the same TaskDefinition Name multiple times ECS with create a new 'revision'
-    ecsClient.registerTaskDefinition(registerTaskDefinitionWithTaskRoleArn)
+    ecsClient.registerTaskDefinition(registerTaskDefinitionRequest)
   }
 
 

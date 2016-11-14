@@ -26,7 +26,7 @@ class ContainerServiceExecutor() extends SpecificTaskExecutor[ContainerServiceEx
 
   val awsRegion = config.getString("aws.region")
   val companionImage = config.getString("companion.tag")
-  val cluster = config.getString("ecs.cluster")
+  val ecsCluster = config.getString("ecs.cluster")
   val defaultCpu = config.getInt("ecs.defaultCpu")
   val defaultMemory = config.getInt("ecs.defaultMemory")
 
@@ -160,7 +160,7 @@ class ContainerServiceExecutor() extends SpecificTaskExecutor[ContainerServiceEx
                                                  command = Seq("bash", "-c", s"TASK_ID=${task.id} /opt/gilt/sundial-companion/sundial-logs.sh"))
     Logger.debug("Starting task")
     val runTaskResult = ECSHelper.runTask(taskDefArn,
-                                          cluster = cluster,
+                                          cluster = ecsCluster,
                                           startedBy = task.id.toString,
                                           overrides = Seq(companionOverride))
     Logger.debug(s"Run task result: $runTaskResult")
@@ -217,7 +217,7 @@ class ContainerServiceExecutor() extends SpecificTaskExecutor[ContainerServiceEx
       refreshMetadata(state)
       Logger.debug("Refreshed metadata")
       // See what's the latest from the ECS task
-      val ecsTaskOpt = ECSHelper.describeTask(cluster, state.ecsTaskArn)
+      val ecsTaskOpt = ECSHelper.describeTask(ecsCluster, state.ecsTaskArn)
       Logger.debug(s"Describe task result from ECS: $ecsTaskOpt")
       ecsTaskOpt match {
         case Some(ecsTask) =>
@@ -240,7 +240,7 @@ class ContainerServiceExecutor() extends SpecificTaskExecutor[ContainerServiceEx
   override protected def actuallyKillExecutable(state: ContainerServiceState, task: Task)
                                                (implicit dao: SundialDao): Unit = {
     Logger.info(s"Sundial requesting ECS to kill task ${task.taskDefinitionName} with Sundial ID ${task.id.toString} and ECS ID ${state.ecsTaskArn}")
-    ECSHelper.stopTask(cluster, state.ecsTaskArn)
+    ECSHelper.stopTask(ecsCluster, state.ecsTaskArn)
   }
 
   private def getFamilyName(processDefinitionName: String, taskDefinitionName: String): String = {

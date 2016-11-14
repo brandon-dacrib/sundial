@@ -1,6 +1,6 @@
 package dao
 
-import model.{ShellCommandState, ContainerServiceState}
+import model.{ContainerServiceState, EmrState, ShellCommandState}
 
 trait SundialDao {
 
@@ -10,6 +10,7 @@ trait SundialDao {
   def taskMetadataDao: TaskMetadataDao
   def triggerDao: TriggerDao
   def containerServiceStateDao: ExecutableStateDao[ContainerServiceState]
+  def emrStateDao: ExecutableStateDao[EmrState]
   def shellCommandStateDao: ExecutableStateDao[ShellCommandState]
 
   def ensureCommitted()
