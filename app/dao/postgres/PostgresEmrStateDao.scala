@@ -21,7 +21,6 @@ class PostgresEmrStateDao(implicit conn: Connection) extends ExecutableStateDao[
         taskId = row.getObject(COL_TASK_ID).asInstanceOf[UUID],
         asOf = javaDate(row.getTimestamp(COL_AS_OF)),
         status = PostgresTaskExecutorStatus(rs.getString(COL_STATUS)),
-        emrJobFlowId = rs.getString(COL_JOB_ID),
         emrStepId = rs.getString(COL_STEP_ID)
       )
     }.toList.headOption
@@ -36,23 +35,21 @@ class PostgresEmrStateDao(implicit conn: Connection) extends ExecutableStateDao[
            |SET
            |  $COL_STATUS = ?::task_executor_status,
            |  $COL_AS_OF = ?,
-           |  $COL_JOB_ID = ?
            |  $COL_STEP_ID = ?
            |WHERE $COL_TASK_ID = ?
          """.stripMargin
       val stmt = conn.prepareStatement(sql)
       stmt.setString(1, PostgresTaskExecutorStatus(state.status))
       stmt.setTimestamp(2, state.asOf)
-      stmt.setString(3, state.emrJobFlowId)
-      stmt.setString(4, state.emrStepId)
-      stmt.setObject(5, state.taskId)
+      stmt.setString(3, state.emrStepId)
+      stmt.setObject(4, state.taskId)
       stmt.executeUpdate() > 0
     }
     if(!didUpdate) {
       val sql =
         s"""
            |INSERT INTO $TABLE
-           |($COL_TASK_ID, $COL_AS_OF, $COL_STATUS, $COL_JOB_ID, $COL_STEP_ID)
+           |($COL_TASK_ID, $COL_AS_OF, $COL_STATUS, $COL_STEP_ID)
            |VALUES
            |(?, ?, ?::task_executor_status, ?, ?)
          """.stripMargin
@@ -60,8 +57,7 @@ class PostgresEmrStateDao(implicit conn: Connection) extends ExecutableStateDao[
       stmt.setObject(1, state.taskId)
       stmt.setTimestamp(2, state.asOf)
       stmt.setString(3, PostgresTaskExecutorStatus(state.status))
-      stmt.setString(4, state.emrJobFlowId)
-      stmt.setString(5, state.emrStepId)
+      stmt.setString(4, state.emrStepId)
       stmt.execute()
     }
   }

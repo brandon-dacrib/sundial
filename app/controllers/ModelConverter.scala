@@ -3,9 +3,9 @@ package controllers
 import java.util.UUID
 
 import com.gilt.svc.sundial.v0
-import com.gilt.svc.sundial.v0.models.EnvironmentVariable
+import com.gilt.svc.sundial.v0.models.{EnvironmentVariable, Property}
 import dao.SundialDao
-import model.{ContainerServiceExecutable, ShellCommandExecutable}
+import model.{ContainerServiceExecutable, EmrExecutable, ShellCommandExecutable}
 import util.Conversions._
 
 object ModelConverter {
@@ -73,6 +73,11 @@ object ModelConverter {
       stateOpt.map { state =>
         Seq(v0.models.MetadataEntry(state.taskId, state.asOf, "status", state.status.toString),
             v0.models.MetadataEntry(state.taskId, state.asOf, "taskArn", state.ecsTaskArn))
+      }
+    case e: EmrExecutable =>
+      val stateOpt = dao.emrStateDao.loadState(task.id)
+      stateOpt.map { state =>
+        Seq.empty
       }
   }
 
@@ -152,6 +157,8 @@ object ModelConverter {
       v0.models.ShellScriptCommand(script, envAsEntries)
     case model.ContainerServiceExecutable(image, tag, command, memory, cpu, taskRoleArn, logPaths, environmentVariables) =>
       v0.models.DockerImageCommand(image, tag, command, memory, cpu, taskRoleArn, logPaths, environmentVariables.toSeq.map(variable => EnvironmentVariable(variable._1, variable._2)))
+    case model.EmrExecutable(name, args, mainClass, jar, properties) =>
+      v0.models.EmrJarCommand(jar, mainClass, args, properties.map(property => Property(property._1, property._2)))
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -185,6 +192,9 @@ object ModelConverter {
                                        logPaths,
         environmentVariables.map(envVariable => envVariable.variableName -> envVariable.value).toMap
       )
+
+    case v0.models.EmrJarCommand(jar, mainClass, args, properties) =>
+      model.EmrExecutable("", args, mainClass, jar, properties.map(property => property.key -> property.value))
 
     case v0.models.TaskExecutableUndefinedType(description) =>
       throw new IllegalArgumentException(s"Unknown executable type with description [$description]")

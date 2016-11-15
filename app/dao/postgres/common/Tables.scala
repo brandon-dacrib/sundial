@@ -136,7 +136,6 @@ object EmrStateTable {
   final val COL_TASK_ID = "task_id"
   final val COL_AS_OF = "as_of"
   final val COL_STATUS = "status"
-  final val COL_JOB_ID = "job_id"
   final val COL_STEP_ID = "step_id"
 }
 

@@ -1,6 +1,6 @@
 package service
 
-import java.util.Date
+import java.util.{Date, UUID}
 
 import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClient
 import com.amazonaws.services.elasticmapreduce.model._
@@ -31,15 +31,12 @@ class EmrServiceExecutor extends SpecificTaskExecutor[EmrExecutable, EmrState]{
     stepConfig.setName(executable.name)
     stepConfig.setHadoopJarStep(hadoopJarStep)
     addJobFlowSteps.setSteps(Seq(stepConfig).asJava)
-    emrClient.addJobFlowSteps(addJobFlowSteps)
-    val runJobFlowRequest = new RunJobFlowRequest()
-    emrClient.runJobFlow(runJobFlowRequest)
+    addJobFlowSteps.setJobFlowId(emrCluster)
+    val addJobFlowResult = emrClient.addJobFlowSteps(addJobFlowSteps)
+    EmrState(UUID.randomUUID(), new Date(), addJobFlowResult.getStepIds.get(0), TaskExecutorStatus.Initializing)
   }
 
   override protected def actuallyKillExecutable(state: EmrState, task: Task)(implicit dao: SundialDao): Unit = {
-    val terminateJobFlowsRequest = new TerminateJobFlowsRequest()
-    terminateJobFlowsRequest.setJobFlowIds(Seq(state.emrJobFlowId).asJava)
-    emrClient.terminateJobFlows(terminateJobFlowsRequest)
   }
 
   override protected def actuallyRefreshState(state: EmrState)(implicit dao: SundialDao): EmrState = {
@@ -47,16 +44,16 @@ class EmrServiceExecutor extends SpecificTaskExecutor[EmrExecutable, EmrState]{
     describeStepRequest.setClusterId(emrCluster)
     describeStepRequest.setStepId(state.emrStepId)
     val results = emrClient.describeStep(describeStepRequest)
-    val emrStatus = results.getStep.getStatus.getState
+    val emrStatus = StepState.fromValue(results.getStep.getStatus.getState)
     val stateChangeReason = Option(results.getStep.getStatus.getStateChangeReason.getMessage)
     val status: TaskExecutorStatus = emrStatus match {
-      case StepState.PENDING.toString => TaskExecutorStatus.Initializing
-      case StepState.RUNNING.toString => TaskExecutorStatus.Running
-      case StepState.COMPLETED.toString => TaskExecutorStatus.Completed
-      case StepState.CANCELLED.toString => TaskExecutorStatus.Fault(stateChangeReason)
-      case StepState.FAILED.toString => TaskExecutorStatus.Fault(stateChangeReason)
-      case StepState.INTERRUPTED.toString => TaskExecutorStatus.Fault(stateChangeReason)
+      case StepState.PENDING => TaskExecutorStatus.Initializing
+      case StepState.RUNNING => TaskExecutorStatus.Running
+      case StepState.COMPLETED => TaskExecutorStatus.Completed
+      case StepState.CANCELLED => TaskExecutorStatus.Fault(stateChangeReason)
+      case StepState.FAILED => TaskExecutorStatus.Fault(stateChangeReason)
+      case StepState.INTERRUPTED => TaskExecutorStatus.Fault(stateChangeReason)
     }
-    EmrState(state.taskId, new Date(), state.emrJobFlowId, state.emrStepId, status)
+    EmrState(state.taskId, new Date(), state.emrStepId, status)
   }
 }

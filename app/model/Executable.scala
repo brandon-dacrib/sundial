@@ -27,4 +27,4 @@ case class ShellCommandExecutable(script: String, environmentVariables: Map[Stri
 case class ShellCommandState(taskId: UUID, asOf: Date, status: TaskExecutorStatus) extends ExecutableState
 
 case class EmrExecutable(name: String, args: Seq[String], mainClass: String, jar: String, properties: Seq[(String, String)]) extends Executable
-case class EmrState(taskId: UUID, asOf: Date, emrJobFlowId: String, emrStepId: String, status: TaskExecutorStatus) extends ExecutableState
+case class EmrState(taskId: UUID, asOf: Date, emrStepId: String, status: TaskExecutorStatus) extends ExecutableState
